@@ -1,3 +1,4 @@
+#ENSF 338 Lab 3 ex4.py
 import time
 import numpy as np
 import matplotlib.pyplot as plt
