@@ -71,5 +71,4 @@ if __name__ == "__main__":
     sizes, bubble_sort_times, quick_sort_times, bubble_sort_times_best, quick_sort_times_best = test_sorting_algorithms()
     plot_performance(sizes, bubble_sort_times, quick_sort_times, 'Performance Comparison of Bubble Sort and Quick Sort (Average Case)')
 
-    plot_performance(sizes, bubble_sort_times_worst, quick_sort_times_worst, 'Performance Comparison of Bubble Sort and Quick Sort (Worst Case)')
-    plot_performance(sizes, bubble_sort_times_best, quick_sort_times_best, 'Performance Comparison of Bubble Sort and Quick Sort (Best Case)')
+
