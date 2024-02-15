@@ -1,3 +1,9 @@
+'''
+Question 4
+As the size increases past 100, bnary insertion tends to 
+out perform insertion sort. Insertion sort tends only to be
+faster for small input sizes. 
+'''
 import time
 import random
 import matplotlib.pyplot as plt
