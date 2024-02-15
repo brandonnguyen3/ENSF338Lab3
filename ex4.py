@@ -1,4 +1,4 @@
-#ENSF 338 Lab 3 ex4.py
+#ENSF 338 Lab 3 exercise 4
 import time
 import numpy as np
 import matplotlib.pyplot as plt
