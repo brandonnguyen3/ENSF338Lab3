@@ -1,6 +1,6 @@
 '''
 Question 4
-As the size increases past 100, bnary insertion tends to 
+As the size increases past 100, binary insertion tends to 
 out perform insertion sort. Insertion sort tends only to be
 faster for small input sizes. 
 '''

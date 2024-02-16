@@ -1,6 +1,8 @@
+import time
 import random
 import matplotlib.pyplot as plt
-import timeit
+import sys 
+sys.setrecursionlimit(20000) 
 
 def bubble_sort(arr):
     n = len(arr)
@@ -9,66 +11,169 @@ def bubble_sort(arr):
             if arr[j] > arr[j+1]:
                 arr[j], arr[j+1] = arr[j+1], arr[j]
 
-def quick_sort(arr):
+def quicksort(arr, worst_case=False):
     if len(arr) <= 1:
         return arr
-    pivot = arr[len(arr) // 2]
+    
+
+    if worst_case:
+        pivot = arr[0]  # Choose the first element as the pivot
+    else:
+        pivot = arr[len(arr) // 2]  # Choose middle element as the pivot
+
     left = [x for x in arr if x < pivot]
     middle = [x for x in arr if x == pivot]
     right = [x for x in arr if x > pivot]
-    return quick_sort(left) + middle + quick_sort(right)
 
-def generate_worst_case(size):
-    return list(range(size, 0, -1))
+    return quicksort(left, worst_case) + middle + quicksort(right, worst_case)
 
-def generate_best_case(size):
-    return list(range(1, size+1))
+def generate_input_data(size):
+    return [random.randint(1, 1000) for _ in range(size)]
 
-def generate_random_case(size):
-    return [random.randint(0, 1000) for _ in range(size)]
+def test_algorithm(algorithm, input_data):
+    start_time = time.time()
+    algorithm(input_data)
+    end_time = time.time()
+    return end_time - start_time
 
-def test_sorting_algorithms():
-    sizes = [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800]
-    bubble_sort_times_worst = []
-    quick_sort_times_worst = []
-    bubble_sort_times_best = []
-    quick_sort_times_best = []
+def run_tests(input_sizes):
+    bubble_sort_best_times = []
+    bubble_sort_worst_times = []
+    bubble_sort_avg_times = []
 
-    for size in sizes:
-        # Worst case
-        worst_case_arr = generate_worst_case(size)
-        bubble_arr = worst_case_arr.copy()
-        bubble_time_worst = timeit.timeit(lambda: bubble_sort(bubble_arr), number=1)
-        bubble_sort_times_worst.append(bubble_time_worst)
+    quicksort_best_times = []
+    quicksort_worst_times = []
+    quicksort_avg_times = []
 
-        quick_arr = worst_case_arr.copy()
-        quick_time_worst = timeit.timeit(lambda: quick_sort(quick_arr), number=1)
-        quick_sort_times_worst.append(quick_time_worst)
+    for size in input_sizes:
+        input_data = generate_input_data(size)
+        #BUBBLE SORT
+        # best case: sorted array
+        bubble_sort_best_times.append(test_algorithm(bubble_sort, sorted(input_data)))
 
-        # Best case
-        best_case_arr = generate_best_case(size)
-        bubble_arr = best_case_arr.copy()
-        bubble_time_best = timeit.timeit(lambda: bubble_sort(bubble_arr), number=1)
-        bubble_sort_times_best.append(bubble_time_best)
+        # worst case: reverse array
+        bubble_sort_worst_times.append(test_algorithm(bubble_sort, sorted(input_data, reverse=True)))
 
-        quick_arr = best_case_arr.copy()
-        quick_time_best = timeit.timeit(lambda: quick_sort(quick_arr), number=1)
-        quick_sort_times_best.append(quick_time_best)
+        # average case: random order
+        bubble_sort_avg_times.append(test_algorithm(bubble_sort, input_data))
 
-    return sizes, bubble_sort_times_worst, quick_sort_times_worst, bubble_sort_times_best, quick_sort_times_best
+        #QUICKSORT
+        # best case: sorted array
+        quicksort_best_times.append(test_algorithm(quicksort, sorted(input_data)))
+
+        # worst case: ascending array
+        quicksort_worst_times.append(test_algorithm(lambda x: quicksort(x, worst_case=True), sorted(input_data, reverse=True)))
+
+        # average case: random order
+        quicksort_avg_times.append(test_algorithm(quicksort, input_data))
 
 
-def plot_performance(sizes, bubble_sort_times, quick_sort_times, title):
-    plt.plot(sizes, bubble_sort_times, label='Bubble Sort')
-    plt.plot(sizes, quick_sort_times, label='Quick Sort')
-    plt.xlabel('Number of Elements')
-    plt.ylabel('Time (seconds)')
-    plt.title(title)
-    plt.legend()
+    return (bubble_sort_best_times, bubble_sort_worst_times, bubble_sort_avg_times,
+            quicksort_best_times, quicksort_worst_times, quicksort_avg_times)
+
+#used chatgpt
+def plot_performance_cases(input_sizes, *times_sets, case_labels):
+    fig, axs = plt.subplots(1, 3, figsize=(15, 5))  # Changed to 1 row and 3 columns
+    fig.suptitle('Sorting Algorithm Performance')
+
+    markers = ['o', 's', 'D', '^', 'v', '<']
+    colors = ['b', 'g', 'r', 'c', 'm', 'y']
+
+    for i, ax in enumerate(axs):
+        if i < len(times_sets):
+            all_times = times_sets[i]
+            for j, case_label in enumerate(case_labels):
+                case_times = all_times[j] if j < len(all_times) else []  # Handle different sizes
+                marker_index = i * len(case_labels) + j  
+                color_index = i * len(case_labels) + j  
+                ax.plot(input_sizes[:len(case_times)], case_times, label=f"{case_label}", marker=markers[marker_index], color=colors[color_index])
+
+                # Set title based on the case
+                if i == 0:
+                    ax.set_title("Best Case")
+                elif i == 1:
+                    ax.set_title("Worst Case")
+                elif i == 2:
+                    ax.set_title("Average Case")
+    
+            ax.set(xlabel='Input Size', ylabel='Runtime (s)')
+            ax.legend()
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.show()
 
+def choose_threshold(input_sizes, bubble_sort_best_times, bubble_sort_worst_times, bubble_sort_avg_times,
+                     quicksort_best_times, quicksort_worst_times, quicksort_avg_times, small_array_threshold=100):
+    # Analyze the performance plots to choose a threshold for each case
+    # You might want to choose the point where the two algorithms cross over for each case
+
+    # Find the index where Quick Sort surpasses Bubble Sort for the best case
+    best_threshold_index = next(
+        i for i, (bubble_time, quicksort_time) in enumerate(zip(bubble_sort_best_times, quicksort_best_times))
+        if quicksort_time < bubble_time
+    )
+
+    # Find the index where Quick Sort surpasses Bubble Sort for the worst case
+    worst_threshold_index = next(
+        i for i, (bubble_time, quicksort_time) in enumerate(zip(bubble_sort_worst_times, quicksort_worst_times))
+        if quicksort_time < bubble_time
+    )
+
+    # Find the index where Quick Sort surpasses Bubble Sort for the average case
+    avg_threshold_index = next(
+        i for i, (bubble_time, quicksort_time) in enumerate(zip(bubble_sort_avg_times, quicksort_avg_times))
+        if quicksort_time < bubble_time
+    )
+
+    # Extract the input sizes at the determined threshold indices
+    best_threshold_size = input_sizes[best_threshold_index]
+    worst_threshold_size = input_sizes[worst_threshold_index]
+    avg_threshold_size = input_sizes[avg_threshold_index]
+
+    # Determine when to use Bubble Sort for small arrays
+    use_bubble_sort_best = best_threshold_size <= small_array_threshold
+    use_bubble_sort_worst = worst_threshold_size <= small_array_threshold
+    use_bubble_sort_avg = avg_threshold_size <= small_array_threshold
+
+    # Return the threshold input sizes and the decision to use Bubble Sort for small arrays
+    return (best_threshold_size, use_bubble_sort_best), (worst_threshold_size, use_bubble_sort_worst), (avg_threshold_size, use_bubble_sort_avg)
+#end of chagpt
+
+
+
 if __name__ == "__main__":
-    sizes, bubble_sort_times, quick_sort_times, bubble_sort_times_best, quick_sort_times_best = test_sorting_algorithms()
-    plot_performance(sizes, bubble_sort_times, quick_sort_times, 'Performance Comparison of Bubble Sort and Quick Sort (Average Case)')
+    input_sizes = [10, 24, 50, 80, 100, 110, 160, 200, 250, 290, 303, 346, 390, 440, 500, 570, 590, 600, 658, 750]
+    #input_sizes = [20, 30, 110, 120, 150, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1500, 2000, 3000, 4000, 5000, 7500, 10000]
+
+    (bubble_sort_best_times, bubble_sort_worst_times, bubble_sort_avg_times,
+     quicksort_best_times, quicksort_worst_times, quicksort_avg_times) = run_tests(input_sizes)
+
+    plot_performance_cases(input_sizes,
+                       [bubble_sort_best_times, quicksort_best_times],
+                       [bubble_sort_worst_times, quicksort_worst_times],
+                       [bubble_sort_avg_times, quicksort_avg_times],
+                       case_labels=['Bubble Sort', 'Quicksort'])
+    
+    best_threshold, worst_threshold, avg_threshold = choose_threshold(
+        input_sizes,
+        bubble_sort_best_times, bubble_sort_worst_times, bubble_sort_avg_times,
+        quicksort_best_times, quicksort_worst_times, quicksort_avg_times, small_array_threshold=100
+    )
+
+    print("Bubble Sort Times:")
+    for size, best_time, worst_time, avg_time in zip(input_sizes, bubble_sort_best_times, bubble_sort_worst_times, bubble_sort_avg_times):
+        print(f"Size: {size}, Best Time: {best_time:.6f}s, Worst Time: {worst_time:.6f}s, Avg Time: {avg_time:.6f}s")
+
+    print("\nQuicksort Times:")
+    for size, best_time, worst_time, avg_time in zip(input_sizes, quicksort_best_times, quicksort_worst_times, quicksort_avg_times):
+        print(f"Size: {size}, Best Time: {best_time:.6f}s, Worst Time: {worst_time:.6f}s, Avg Time: {avg_time:.6f}s")
+
+
+    print(f"Chosen threshold sizes:")
+    print(f"- Best case: {best_threshold[0]}, Use Bubble Sort: {best_threshold[1]}")
+    print(f"- Worst case: {worst_threshold[0]}, Use Bubble Sort: {worst_threshold[1]}")
+    print(f"- Avg case: {avg_threshold[0]}, Use Bubble Sort: {avg_threshold[1]}")
+
+
 
 
